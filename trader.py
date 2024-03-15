@@ -1,4 +1,5 @@
 import config
+import trade_strat
 
 import robin_stocks.robinhood as rh
 import datetime as dt
@@ -9,7 +10,7 @@ import csv
 def login(days):
     time_logged_in = 60*60*24*days
     rh.authentication.login(username=config.USERNAME, password=config.PASSWORD, expiresIn=time_logged_in,
-                            scope='internal', by_sms=True, store_session=True, mfa_code=None, pickle_name='')
+                            scope='internal', by_sms=True, store_session=True, mfa_code=None, pickle_name='87')
 
 
 def logout():
@@ -29,11 +30,11 @@ def get_stock():
 
 
 def market_is_open():
-    market = False
+    market = True
     time_now = dt.datetime.now().time()
 
-    market_open = dt.time(8,30,0)
-    market_close = dt.time(14,59,0)
+    market_open = dt.time(8, 30, 0)
+    market_close = dt.time(14, 59, 0)
     if market_open < time_now < market_close:
         market = True
     else:
@@ -46,7 +47,9 @@ if __name__ == "__main__":
     login(days=7)
 
     stocks = get_stock()
-    print(stocks)
+    # print('Stocks:', stocks)
+
+    ts = trade_strat.trader(stocks)
 
     while market_is_open():
         prices = rh.stocks.get_latest_price(stocks)
@@ -55,7 +58,10 @@ if __name__ == "__main__":
             price = float(prices[i])
             print("{} = ${}".format(stock, price))
 
-        time.sleep(15)
+            trade = ts.trade_option(stock, price)
+            print('trade:', trade)
+
+        time.sleep(60)
 
     logout()
 
